@@ -1,3 +1,4 @@
+/**
 {
   "manifest_version": 3,
   "name": "Website Blocker",
@@ -5,6 +6,28 @@
   "description": "Blocks a specific website.",
   "permissions": ["declarativeNetRequest"],
   "host_permissions": ["*://www.youtube.com/*"],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "ruleset_1",
+        "enabled": true,
+        "path": "rules.json"
+      }
+    ]
+  }
+}
+*/
+
+{
+  "manifest_version": 3,
+  "name": "Website Blocker",
+  "version": "1.1",
+  "description": "Blocks multiple websites dynamically.",
+  "permissions": ["declarativeNetRequest", "storage"],
+  "host_permissions": ["<all_urls>"],
   "action": {
     "default_popup": "popup.html"
   },
