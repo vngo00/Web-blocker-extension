@@ -4,7 +4,7 @@
     "priority": 1,
     "action": { "type": "redirect", "redirect": { "extensionPath": "/blocked.html" } },
     "condition": {
-      "urlFilter": "youtube.com",
+      "urlFilter": "test.com",
       "resourceTypes": ["main_frame"]
     }
   }
