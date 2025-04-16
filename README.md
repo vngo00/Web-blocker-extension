@@ -14,4 +14,5 @@ Objetive Features(list of features that I want to have for this extentions):
 8. Focus time 2.0: TBD
     - Locked with an unknown password until set time achived, password will be given to unlock
 9. Black List/ white List: TBD
-10. More coming.
+10. Block redirect
+11. More Coming...
