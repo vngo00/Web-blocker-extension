@@ -56,11 +56,20 @@ document.addEventListener("DOMContentLoaded", async function () {
 /***********************
  * Storage Helpers
  ***********************/
+/**
+ * Get locally stored blocked url list
+ * @returns array of blocked urls
+ */
 async function getSites() {
     const stored = await chrome.storage.sync.get("blockedSites");
     return stored.blockedSites || [];
 }
 
+/**
+ * Set the blocked url list to local storage
+ * @param {*} sites : list of blocked urls
+ * @returns sites
+ */
 async function setSite(sites) {
     await chrome.storage.sync.set({ blockedSites : sites});
     return sites;
