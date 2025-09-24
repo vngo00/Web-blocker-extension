@@ -22,14 +22,25 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
-    document.getElementById("addSite").addEventListener("click", () => {
-        const siteInput = document.getElementById("siteInput").value.trim();
-        
-        if (siteInput && !blockedSites.includes(siteInput)) {
-            blockedSites.push(siteInput);
-            chrome.storage.sync.set({ blockedSites });
-            updateRules();
-            updateUI();
+
+    const addSite = () => {
+    const siteInput = document.getElementById("siteInput").value.trim();
+
+    if (siteInput && !blockedSites.includes(siteInput)) {
+        blockedSites.push(siteInput);
+        chrome.storage.sync.set({ blockedSites });
+        updateRules();
+        updateUI();
+    }
+    };
+
+    // Click event for the button
+    document.getElementById("addSite").addEventListener("click", addSite);
+
+    // Enter key support for the input field
+    document.getElementById("siteInput").addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+            addSite();
         }
     });
 
