@@ -1,8 +1,11 @@
-// Load blocked sites on popup open
+/***
+ * Retrieve from local storage if there is a list of blocked sites 
+ * is stored.
+ */
 document.addEventListener("DOMContentLoaded", async function () {
     const siteList = document.getElementById("siteList");
-    const storedSites = await chrome.storage.sync.get("blockedSites");
-    const blockedSites = storedSites.blockedSites || [];
+    const blockedSites = await getSites();
+    console.log(blockedSites)
 
     function updateUI() {
         siteList.innerHTML = "";
@@ -14,7 +17,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             removeBtn.onclick = function () {
                 blockedSites.splice(index, 1);
                 chrome.storage.sync.set({ blockedSites });
-                updateRules();
+                updateRules(blockedSites);
                 updateUI();
             };
             li.appendChild(removeBtn);
@@ -25,11 +28,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const addSite = () => {
     const siteInput = document.getElementById("siteInput").value.trim();
+    console.log(siteInput);
 
     if (siteInput && !blockedSites.includes(siteInput)) {
         blockedSites.push(siteInput);
         chrome.storage.sync.set({ blockedSites });
-        updateRules();
+        updateRules(blockedSites);
         updateUI();
     }
     };
@@ -47,20 +51,53 @@ document.addEventListener("DOMContentLoaded", async function () {
     updateUI();
 });
 
-// Update extension rules
-async function updateRules() {
-    const storedSites = await chrome.storage.sync.get("blockedSites");
-    const blockedSites = storedSites.blockedSites || [];
 
-    const rules = blockedSites.map((site, index) => ({
-        id: index + 1,
-        priority: 1,
-        action: { type: "redirect", redirect: { extensionPath: "/blocked.html" } },
-        condition: { urlFilter: site, resourceTypes: ["main_frame"] }
-    }));
+
+/***********************
+ * Storage Helpers
+ ***********************/
+async function getSites() {
+    const stored = await chrome.storage.sync.get("blockedSites");
+    return stored.blockedSites || [];
+}
+
+async function setSite(sites) {
+    await chrome.storage.sync.set({ blockedSites : sites});
+    return sites;
+}
+
+
+
+/***********************
+ * Rule Management
+ ***********************/
+/**
+ * when new block site is added to the list, remove old rules and add new ones
+ * along with the newly added site.
+ * @param {*} sites - list of urls that need to be blocked.
+ */
+async function updateRules(sites) {
+    const rules = sites.map((site, index) => ({
+    id: index + 1,
+    priority: 1,
+    action: { type: "redirect", redirect: { extensionPath: "/blocked.html" } },
+    condition: { urlFilter: site, resourceTypes: ["main_frame"] }
+  }));
 
     await chrome.declarativeNetRequest.updateDynamicRules({
-        removeRuleIds: Array.from({ length: 100 }, (_, i) => i + 1), // Clear old rules
-        addRules: rules
+    removeRuleIds: Array.from({ length: 100 }, (_, i) => i + 1),
+    addRules: rules
     });
 }
+
+
+
+// /***********************
+//  * UI Management
+//  ***********************/
+
+
+
+// /***********************
+//  * Initialization
+//  ***********************/
