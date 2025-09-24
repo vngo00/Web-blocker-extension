@@ -4,8 +4,8 @@ Objective:
 
 Objetive Features(list of features that I want to have for this extentions):
 
-1. Block a website (statically) : done
-2. Block/Unblock multiple websites dynamically: done
+1. Block a website (statically) : done (will need to refactor or clean the code)
+2. Block/Unblock multiple websites dynamically: done (will need to refactor or clean the code)
 3. Focus time: TBD
 4. Block by Category: TBD
 5. Temporary Bypass: TBD
