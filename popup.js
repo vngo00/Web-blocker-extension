@@ -7,23 +7,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const blockedSites = await getSites();
     console.log(blockedSites)
 
-    function updateUI() {
-        siteList.innerHTML = "";
-        blockedSites.forEach((site, index) => {
-            const li = document.createElement("li");
-            li.textContent = site;
-            const removeBtn = document.createElement("button");
-            removeBtn.textContent = "Remove";
-            removeBtn.onclick = function () {
-                blockedSites.splice(index, 1);
-                chrome.storage.sync.set({ blockedSites });
-                updateRules(blockedSites);
-                updateUI();
-            };
-            li.appendChild(removeBtn);
-            siteList.appendChild(li);
-        });
-    }
 
 
     const addSite = () => {
@@ -34,7 +17,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         blockedSites.push(siteInput);
         chrome.storage.sync.set({ blockedSites });
         updateRules(blockedSites);
-        updateUI();
+        renderSiteList();
     }
     };
 
@@ -48,7 +31,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     });
 
-    updateUI();
+    renderSiteList();
 });
 
 
@@ -101,12 +84,33 @@ async function updateRules(sites) {
 
 
 
-// /***********************
-//  * UI Management
-//  ***********************/
+/***********************
+ * UI Management
+ ***********************/
+async function renderSiteList() {
+    const siteList = document.getElementById("siteList");
+    siteList.innerHTML ="";
+
+    const sites = await getSites();
+    sites.forEach((site, index) => {
+        const li = document.createElement("li");
+        li.textContent = site;
+
+        const removeBtn = document.createElement("button");
+        removeBtn.textContent = "Remove";
+        removeBtn.onclick = async () => {
+            const updatedSites = sites.filter((_, i) => i !== index);
+            await setSite(updatedSites);
+            await updateRules(updatedSites);
+            renderSiteList();
+        };
+
+        li.appendChild(removeBtn);
+        siteList.appendChild(li);
+    });
+}
 
 
-
-// /***********************
-//  * Initialization
-//  ***********************/
+/***********************
+ * Initialization
+ ***********************/
