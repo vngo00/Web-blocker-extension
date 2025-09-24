@@ -3,23 +3,6 @@
  * is stored.
  */
 document.addEventListener("DOMContentLoaded", async function () {
-    const siteList = document.getElementById("siteList");
-    const blockedSites = await getSites();
-    console.log(blockedSites)
-
-
-
-    const addSite = () => {
-    const siteInput = document.getElementById("siteInput").value.trim();
-    console.log(siteInput);
-
-    if (siteInput && !blockedSites.includes(siteInput)) {
-        blockedSites.push(siteInput);
-        chrome.storage.sync.set({ blockedSites });
-        updateRules(blockedSites);
-        renderSiteList();
-    }
-    };
 
     // Click event for the button
     document.getElementById("addSite").addEventListener("click", addSite);
@@ -108,6 +91,23 @@ async function renderSiteList() {
         li.appendChild(removeBtn);
         siteList.appendChild(li);
     });
+}
+
+/**
+ * add site to blocked site list
+ * @returns 
+ */
+async function addSite() {
+    const site = document.getElementById("siteInput").value.trim();
+    if (!site) return;
+
+    const sites = await getSites();
+    if (!sites.includes(site)){
+        sites.push(site);
+        await setSite(sites);
+        await updateRules(sites);
+        renderSiteList();
+    }
 }
 
 
