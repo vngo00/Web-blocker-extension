@@ -1,23 +1,3 @@
-/***
- * Retrieve from local storage if there is a list of blocked sites 
- * is stored.
- */
-document.addEventListener("DOMContentLoaded", async function () {
-
-    // Click event for the button
-    document.getElementById("addSite").addEventListener("click", addSite);
-
-    // Enter key support for the input field
-    document.getElementById("siteInput").addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-            addSite();
-        }
-    });
-
-    renderSiteList();
-});
-
-
 
 /***********************
  * Storage Helpers
@@ -110,7 +90,19 @@ async function addSite() {
     }
 }
 
+function bindUIEvents() {
+  document.getElementById("addSite").addEventListener("click", addSite);
+  document.getElementById("siteInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") addSite();
+  });
+}
+
 
 /***********************
  * Initialization
  ***********************/
+
+document.addEventListener("DOMContentLoaded", async () => {
+  bindUIEvents();
+  renderSiteList();
+});
