@@ -95,6 +95,18 @@ function bindUIEvents() {
   document.getElementById("siteInput").addEventListener("keydown", (e) => {
     if (e.key === "Enter") addSite();
   });
+  
+  const modeBtn = document.getElementById("modeToggle");
+
+  modeBtn.addEventListener("click", async () => {
+    const stored = await chrome.storage.sync.get("mode");
+    let mode = stored.mode || "blacklist"
+
+    mode = (mode === "blacklist") ? "whitelist" : "blacklist";
+
+    await chrome.storage.sync.set({ mode});
+    modeBtn.textContent = mode
+  })
 }
 
 
