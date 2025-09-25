@@ -4,21 +4,25 @@
  ***********************/
 /**
  * Get locally stored blocked url list
+ * @param {str} mode : blacklist || whitelist
  * @returns array of blocked urls
  */
-async function getSites() {
-    const stored = await chrome.storage.sync.get("blockedSites");
-    return stored.blockedSites || [];
+async function getSites(mode = "blacklist") {
+  mode = (mode === "blacklist") ? "blocklist" : "allowlist";
+  const stored = await chrome.storage.sync.get(mode);
+  return stored[mode] || [];
 }
 
 /**
  * Set the blocked url list to local storage
  * @param {*} sites : list of blocked urls
+ * @param {str} mode : blacklist || whitelist
  * @returns sites
  */
-async function setSite(sites) {
-    await chrome.storage.sync.set({ blockedSites : sites});
-    return sites;
+async function setSite(sites, mode = "blacklist") {
+  mode = (mode === "blacklist") ? "blocklist" : "allowlist";
+  await chrome.storage.sync.set({[mode] : sites});
+  return sites;
 }
 
 
@@ -31,15 +35,34 @@ async function setSite(sites) {
  * along with the newly added site.
  * @param {*} sites - list of urls that need to be blocked.
  */
-async function updateRules(sites) {
-    const rules = sites.map((site, index) => ({
+async function updateRules(sites, mode = "blacklist") {
+  let rules = [];
+  if (mode === "blacklist"){
+    rules = sites.map((site, index) => ({
     id: index + 1,
     priority: 1,
     action: { type: "redirect", redirect: { extensionPath: "/blocked.html" } },
     condition: { urlFilter: site, resourceTypes: ["main_frame"] }
   }));
+  } else if (mode === "whitelist"){
+    rules.push({
+      id: 1,
+      priority:1,
+      action: {type: "block"},
+      condition: {urlFilter: "*", resourceTypes: ["main_frame"]},
+    });
 
-    await chrome.declarativeNetRequest.updateDynamicRules({
+    sites.map((site, index) => {
+      rules.push({
+        id: index + 2,
+        priority: 2,
+        action: {type: "allow"},
+        condition:{ urlFilter: site, resourceTypes: ["main_frame"]},
+      });
+    });
+  }
+
+  await chrome.declarativeNetRequest.updateDynamicRules({
     removeRuleIds: Array.from({ length: 100 }, (_, i) => i + 1),
     addRules: rules
     });
@@ -53,8 +76,9 @@ async function updateRules(sites) {
 async function renderSiteList() {
     const siteList = document.getElementById("siteList");
     siteList.innerHTML ="";
-
-    const sites = await getSites();
+    const mode = await chrome.storage.sync.get("mode");
+    console.log(mode.mode);
+    const sites = await getSites(mode.mode);
     sites.forEach((site, index) => {
         const li = document.createElement("li");
         li.textContent = site;
@@ -63,8 +87,8 @@ async function renderSiteList() {
         removeBtn.textContent = "Remove";
         removeBtn.onclick = async () => {
             const updatedSites = sites.filter((_, i) => i !== index);
-            await setSite(updatedSites);
-            await updateRules(updatedSites);
+            await setSite(updatedSites, mode.mode);
+            await updateRules(updatedSites, mode.mode);
             renderSiteList();
         };
 
@@ -80,14 +104,27 @@ async function renderSiteList() {
 async function addSite() {
     const site = document.getElementById("siteInput").value.trim();
     if (!site) return;
-
-    const sites = await getSites();
+    console.log("better get here");
+    const mode = await chrome.storage.sync.get("mode");
+    const sites = await getSites(mode.mode);
     if (!sites.includes(site)){
         sites.push(site);
-        await setSite(sites);
-        await updateRules(sites);
+        await setSite(sites, mode.mode);
+        await updateRules(sites, mode.mode);
         renderSiteList();
     }
+}
+
+/***
+ * Switch between blacklist and whitelist mode
+ */
+async function toggleMode() {
+  const modeBtn = document.getElementById("modeToggle");
+  const stored = await chrome.storage.sync.get("mode");
+  let mode = stored.mode || "blacklist"
+  mode = (mode === "blacklist") ? "whitelist" : "blacklist";
+  await chrome.storage.sync.set({mode});
+  modeBtn.textContent = mode
 }
 
 function bindUIEvents() {
@@ -95,18 +132,8 @@ function bindUIEvents() {
   document.getElementById("siteInput").addEventListener("keydown", (e) => {
     if (e.key === "Enter") addSite();
   });
+  document.getElementById("modeToggle").addEventListener("click", toggleMode);
   
-  const modeBtn = document.getElementById("modeToggle");
-
-  modeBtn.addEventListener("click", async () => {
-    const stored = await chrome.storage.sync.get("mode");
-    let mode = stored.mode || "blacklist"
-
-    mode = (mode === "blacklist") ? "whitelist" : "blacklist";
-
-    await chrome.storage.sync.set({ mode});
-    modeBtn.textContent = mode
-  })
 }
 
 
