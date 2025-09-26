@@ -49,16 +49,16 @@ async function updateRules(sites, mode = "blacklist") {
       id: 1,
       priority:1,
       action: {type: "block"},
-      condition: {urlFilter: "*", resourceTypes: ["main_frame"]},
+      condition: {urlFilter: "||", resourceTypes: ["main_frame"]},
     });
 
     sites.map((site, index) => {
       rules.push({
         id: index + 2,
-        priority: 2,
+        priority: 10,
         action: {type: "allow"},
-        condition:{ urlFilter: site, resourceTypes: ["main_frame"]},
-      });
+        condition:{ urlFilter: "||" + site, resourceTypes: ["main_frame"]},
+      }); 
     });
   }
 
@@ -89,7 +89,7 @@ async function renderSiteList() {
             const updatedSites = sites.filter((_, i) => i !== index);
             await setSite(updatedSites, mode.mode);
             await updateRules(updatedSites, mode.mode);
-            renderSiteList();
+            await renderSiteList();
         };
 
         li.appendChild(removeBtn);
@@ -111,7 +111,7 @@ async function addSite() {
         sites.push(site);
         await setSite(sites, mode.mode);
         await updateRules(sites, mode.mode);
-        renderSiteList();
+        await renderSiteList();
     }
 }
 
@@ -125,6 +125,16 @@ async function toggleMode() {
   mode = (mode === "blacklist") ? "whitelist" : "blacklist";
   await chrome.storage.sync.set({mode});
   modeBtn.textContent = mode
+  const updatedSites = await getSites(mode.mode);
+  await renderSiteList();
+  await updateRules(updatedSites, mode.mode);
+}
+
+async function initModeButton() {
+  const stored = await chrome.storage.sync.get("mode");
+  const mode = stored.mode || "blacklist";
+  const modeBtn = document.getElementById("modeToggle");
+  modeBtn.textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
 }
 
 function bindUIEvents() {
@@ -143,5 +153,6 @@ function bindUIEvents() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   bindUIEvents();
-  renderSiteList();
+  await initModeButton();
+  await renderSiteList();
 });
