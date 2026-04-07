@@ -135,5 +135,6 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
+personal_note/
 
 _metadata/generated_indexed_rulesets/_ruleset*
