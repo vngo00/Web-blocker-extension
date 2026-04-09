@@ -138,7 +138,7 @@ async function addSite() {
     console.log("better get here");
     //const mode = await chrome.storage.sync.get("mode");
     let mode = currentMode; 
-    const sites =  getSites(mode);
+    let sites =  getSites(mode);
     if (!sites.includes(site)){
         sites.push(site);
         await setSite(sites, mode);
@@ -189,4 +189,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   bindUIEvents();
   await initModeButton();
   await renderSiteList();
+  await retrieveSites();
 });
