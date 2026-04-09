@@ -1,3 +1,20 @@
+/***********************
+ * Popup Script for Blocker Extension
+ * This script manages the UI and interactions for the popup of the blocker extension.
+ * It allows users to add/remove sites from their blocklist or allowlist and toggle between modes.
+ ***********************/
+
+
+/***********************
+ * Constants and Variables
+ ***********************/
+
+var blacklist = [];
+var whitelist = []; 
+var currentMode = "blacklist";
+
+
+
 
 /***********************
  * Storage Helpers
@@ -7,10 +24,24 @@
  * @param {str} mode : blacklist || whitelist
  * @returns array of blocked urls
  */
-async function getSites(mode = "blacklist") {
-  mode = (mode === "blacklist") ? "blocklist" : "allowlist";
-  const stored = await chrome.storage.sync.get(mode);
-  return stored[mode] || [];
+// async function getSites(mode = "blacklist") {
+//   mode = (mode === "blacklist") ? "blocklist" : "allowlist";
+//   const stored = await chrome.storage.sync.get(mode);
+//   return stored[mode] || [];
+// }
+
+function getSites(mode = "blacklist") {
+  if (mode == "blacklist") {
+    return blacklist;
+  }
+  return whitelist;
+}
+  
+async function retrieveSites() {
+  const stored = await chrome.storage.sync.get(["blocklist", "allowlist"]);
+  blacklist = stored.blocklist || [];
+  whitelist = stored.allowlist || [];
+
 }
 
 /**
@@ -78,7 +109,7 @@ async function renderSiteList() {
     siteList.innerHTML ="";
     const mode = await chrome.storage.sync.get("mode");
     console.log(mode.mode);
-    const sites = await getSites(mode.mode);
+    const sites = getSites(mode.mode);
     sites.forEach((site, index) => {
         const li = document.createElement("li");
         li.textContent = site;
@@ -105,12 +136,13 @@ async function addSite() {
     const site = document.getElementById("siteInput").value.trim();
     if (!site) return;
     console.log("better get here");
-    const mode = await chrome.storage.sync.get("mode");
-    const sites = await getSites(mode.mode);
+    //const mode = await chrome.storage.sync.get("mode");
+    let mode = currentMode; 
+    const sites =  getSites(mode);
     if (!sites.includes(site)){
         sites.push(site);
-        await setSite(sites, mode.mode);
-        await updateRules(sites, mode.mode);
+        await setSite(sites, mode);
+        await updateRules(sites, mode);
         await renderSiteList();
     }
 }
@@ -120,12 +152,13 @@ async function addSite() {
  */
 async function toggleMode() {
   const modeBtn = document.getElementById("modeToggle");
-  const stored = await chrome.storage.sync.get("mode");
-  let mode = stored.mode || "blacklist"
+  //const stored = await chrome.storage.sync.get("mode");
+  let mode = currentMode;
+  //let mode = stored.mode || "blacklist"
   mode = (mode === "blacklist") ? "whitelist" : "blacklist";
   await chrome.storage.sync.set({mode});
   modeBtn.textContent = mode
-  const updatedSites = await getSites(mode.mode);
+  const updatedSites =  getSites(mode.mode);
   await renderSiteList();
   await updateRules(updatedSites, mode.mode);
 }
@@ -133,6 +166,7 @@ async function toggleMode() {
 async function initModeButton() {
   const stored = await chrome.storage.sync.get("mode");
   const mode = stored.mode || "blacklist";
+  currentMode = mode;
   const modeBtn = document.getElementById("modeToggle");
   modeBtn.textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
 }
