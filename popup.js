@@ -50,8 +50,9 @@ async function retrieveSites() {
  * @param {str} mode : blacklist || whitelist
  * @returns sites
  */
-async function setSite(sites, mode = "blacklist") {
-  mode = (mode === "blacklist") ? "blocklist" : "allowlist";
+async function setSite( mode = "blacklist") {
+  mode = (mode == "blacklist") ? "blocklist" : "allowlist";
+  let sites = (mode == "blacklist") ? blacklist : whitelist;
   await chrome.storage.sync.set({[mode] : sites});
   return sites;
 }
@@ -66,9 +67,11 @@ async function setSite(sites, mode = "blacklist") {
  * along with the newly added site.
  * @param {*} sites - list of urls that need to be blocked.
  */
-async function updateRules(sites, mode = "blacklist") {
+async function updateRules(mode = "blacklist") {
   let rules = [];
+  let sites = [];
   if (mode === "blacklist"){
+    sites = blacklist;
     rules = sites.map((site, index) => ({
     id: index + 1,
     priority: 1,
@@ -76,6 +79,7 @@ async function updateRules(sites, mode = "blacklist") {
     condition: { urlFilter: site, resourceTypes: ["main_frame"] }
   }));
   } else if (mode === "whitelist"){
+    sites  = whitelist;
     rules.push({
       id: 1,
       priority:1,
@@ -107,9 +111,10 @@ async function updateRules(sites, mode = "blacklist") {
 async function renderSiteList() {
     const siteList = document.getElementById("siteList");
     siteList.innerHTML ="";
-    const mode = await chrome.storage.sync.get("mode");
+    //const mode = await chrome.storage.sync.get("mode");
+    let mode = currentMode;
     console.log(mode.mode);
-    const sites = getSites(mode.mode);
+    const sites = getSites(mode);
     sites.forEach((site, index) => {
         const li = document.createElement("li");
         li.textContent = site;
@@ -117,9 +122,10 @@ async function renderSiteList() {
         const removeBtn = document.createElement("button");
         removeBtn.textContent = "Remove";
         removeBtn.onclick = async () => {
-            const updatedSites = sites.filter((_, i) => i !== index);
-            await setSite(updatedSites, mode.mode);
-            await updateRules(updatedSites, mode.mode);
+            //const updatedSites = sites.filter((_, i) => i !== index); // what does this do ?
+
+            await setSite(mode);
+            await updateRules(mode);
             await renderSiteList();
         };
 
@@ -155,12 +161,19 @@ async function toggleMode() {
   //const stored = await chrome.storage.sync.get("mode");
   let mode = currentMode;
   //let mode = stored.mode || "blacklist"
-  mode = (mode === "blacklist") ? "whitelist" : "blacklist";
+  mode = (mode == "blacklist") ? "whitelist" : "blacklist";
+  if (mode == "blacklist") {
+    console.log(blacklist)
+  }
+  else {
+    console.log(whitelist);
+  }
+  currentMode = mode;
   await chrome.storage.sync.set({mode});
   modeBtn.textContent = mode
-  const updatedSites =  getSites(mode.mode);
+  const updatedSites =  getSites(mode);
   await renderSiteList();
-  await updateRules(updatedSites, mode.mode);
+  await updateRules(updatedSites, mode);
 }
 
 async function initModeButton() {
